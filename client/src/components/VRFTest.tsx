@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react'
 import { useBurnerManager } from '@dojoengine/create-burner'
-import { CallData, Contract, RpcProvider } from 'starknet'
+import { CallData, Contract, RpcProvider, shortString } from 'starknet'
 import { VRF_PROVIDER_ADDRESS, RANDOM_CONTRACT_ADDRESS, RPC_URL } from '../config'
 import './VRFTest.css'
 import type { BurnerManager } from '@dojoengine/create-burner'
+
 
 interface VRFTestProps {
   burnerManager: BurnerManager
@@ -42,166 +43,49 @@ const VRFTest: React.FC<VRFTestProps> = ({ burnerManager }) => {
       return
     }
 
-    const address = account.address
-
     setIsGenerating(true)
     setError(null)
     setRandomNumber(null)
 
     try {
-      // According to VRF docs, we need to:
-      // 1. Call request_random first in the multicall
-      // 2. Then call get_random_number() on our contract
-      // The paymaster will wrap it with submit_random and assert_consumed
-
-      // Source::Nonce(address) - type 0
-      // For enums in Starknet, we need to pass them as arrays
-      // Source::Nonce(address) = [0, address]
-      // But CallData.compile might not handle enums correctly, so we'll build it manually
-      const sourceNonce = [0, address]
-
-      console.log('=== VRF Call Debug ===')
-      console.log('User address:', address)
-      console.log('VRF Provider:', VRF_PROVIDER_ADDRESS)
-      console.log('Random Contract:', RANDOM_CONTRACT_ADDRESS)
-      console.log('Source Nonce (enum):', sourceNonce)
-
-      // Build calldata manually for request_random
-      // request_random(caller: ContractAddress, source: Source)
-      // Source::Nonce(address) = [0, address]
-      // So calldata should be: [caller, 0, address]
-      const requestRandomCalldata = [
-        address,  // caller: ContractAddress
-        0,        // Source::Nonce variant
-        address,  // Source::Nonce value (ContractAddress)
-      ]
-
-      console.log('Request Random Calldata (manual):', requestRandomCalldata)
-      console.log('Request Random Calldata (via CallData.compile):', CallData.compile({
-        caller: address,
-        source: sourceNonce,
-      }))
-
-      // Prepare the multicall
-      // First call request_random, then set_random from our contract
-      const requestRandomCall = {
+      const { transaction_hash } = await account.execute([
+        {
         contractAddress: VRF_PROVIDER_ADDRESS,
-        entrypoint: 'request_random',
-        calldata: requestRandomCalldata, // Use manual calldata
-      }
-
-      const setRandomCall = {
+        entrypoint: "request_random",
+        calldata: [RANDOM_CONTRACT_ADDRESS, '0', account.address]
+      },
+      { 
         contractAddress: RANDOM_CONTRACT_ADDRESS,
-        entrypoint: 'set_random',
+        entrypoint: "set_random",
         calldata: [],
-      }
-
-      console.log('Request Random Call:', {
-        contractAddress: requestRandomCall.contractAddress,
-        entrypoint: requestRandomCall.entrypoint,
-        calldata: requestRandomCall.calldata,
-        calldataLength: requestRandomCall.calldata.length,
-      })    
-
-      console.log('Set Random Call:', {
-        contractAddress: setRandomCall.contractAddress,
-        entrypoint: setRandomCall.entrypoint,
-        calldata: setRandomCall.calldata,
-        calldataLength: setRandomCall.calldata.length,
-      })
-
-      const calls = [requestRandomCall, setRandomCall]
-
-      console.log('Total calls:', calls.length)
-      // Helper to serialize BigInt for logging
-      const serializeForLog = (obj: any): any => {
-        if (obj === null || obj === undefined) return obj
-        if (typeof obj === 'bigint') return obj.toString()
-        if (Array.isArray(obj)) return obj.map(serializeForLog)
-        if (typeof obj === 'object') {
-          const result: any = {}
-          for (const key in obj) {
-            result[key] = serializeForLog(obj[key])
-          }
-          return result
-        }
-        return obj
-      }
-      console.log('Full calls array:', JSON.stringify(serializeForLog(calls), null, 2))
-
-      // Execute the multicall
-      console.log('Executing multicall...')
-      const result = await account.execute(calls)
-      console.log('Transaction submitted:', result.transaction_hash)
+      }]
+    );
+      console.log('Transaction submitted:', transaction_hash)
 
       // Wait for transaction to be accepted
       console.log('Waiting for transaction confirmation...')
-      await account.waitForTransaction(result.transaction_hash, { retryInterval: 100 })
+      await account.waitForTransaction(transaction_hash, { retryInterval: 100 })
       console.log('Transaction confirmed!')
 
       // Call get_random to get the actual value that was set
       console.log('Calling get_random to retrieve the actual value...')
-      const contractAbi = [
-        {
-          type: 'function',
-          name: 'get_random',
-          inputs: [],
-          outputs: [
-            {
-              type: 'core::felt252',
-            },
-          ],
-          state_mutability: 'view',
-        },
-      ]
-
-      // Create provider for reading
-      const provider = new RpcProvider({ nodeUrl: RPC_URL })
-      
-      const contract = new Contract({
-        abi: contractAbi,
-        address: RANDOM_CONTRACT_ADDRESS,
-        providerOrAccount: provider, // Provider for reading
-      })
 
       await new Promise(resolve => setTimeout(resolve, 2000))
-      const randomValueBigInt = await contract.get_random()
+      const randomValueBigInt = await account.callContract({
+        contractAddress: RANDOM_CONTRACT_ADDRESS,
+        entrypoint: "get_random",
+        calldata: [],
+      })
+      // setRandomNumber(randomValueBigInt)
       
-      setRandomNumber(randomValueBigInt)
-      
-      console.log('Transaction hash:', result.transaction_hash)
-      console.log('Displayed random value (1-100):', randomValueBigInt.toString())
+      console.log('Transaction hash:', transaction_hash)
+      console.log('get_random() call:', randomValueBigInt)
+      // console.log('Displayed VRF number:', randomValueBigInt)
     } catch (err: any) {
       console.error('=== Error Details ===')
       console.error('Error type:', err?.constructor?.name)
       console.error('Error message:', err?.message)
       console.error('Error stack:', err?.stack)
-      // Helper to serialize BigInt for error logging
-      const serializeForLog = (obj: any): any => {
-        if (obj === null || obj === undefined) return obj
-        if (typeof obj === 'bigint') return obj.toString()
-        if (Array.isArray(obj)) return obj.map(serializeForLog)
-        if (typeof obj === 'object') {
-          const result: any = {}
-          for (const key in obj) {
-            result[key] = serializeForLog(obj[key])
-          }
-          return result
-        }
-        return obj
-      }
-      
-      console.error('Full error object:', JSON.stringify(serializeForLog(err), Object.getOwnPropertyNames(err), 2))
-      
-      if (err?.data) {
-        console.error('Error data:', JSON.stringify(serializeForLog(err.data), null, 2))
-      }
-      
-      if (err?.response) {
-        console.error('Error response:', JSON.stringify(serializeForLog(err.response), null, 2))
-      }
-      
-      setError(err?.message || 'Failed to generate random number')
     } finally {
       setIsGenerating(false)
     }

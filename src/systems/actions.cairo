@@ -41,7 +41,7 @@ pub mod random_test {
 
             let vrf_provider = IVrfProviderDispatcher { contract_address: 0x051fea4450da9d6aee758bdeba88b2f665bcbf549d2c61421aa724e9ac0ced8f.try_into().unwrap() };
             let value = vrf_provider.consume_random(Source::Nonce(caller));
-            
+            println!("value: {}", value);
             world.write_model(@Random { owner: caller, value });
         }
 
