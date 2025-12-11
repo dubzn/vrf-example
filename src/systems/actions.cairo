@@ -29,9 +29,13 @@ pub struct Random {
 
 #[dojo::contract]
 pub mod random_test {
-    use starknet::get_caller_address;
+    use starknet::{get_caller_address, ContractAddress};
     use dojo::model::ModelStorage;
     use super::{IVrfProviderDispatcher, IVrfProviderDispatcherTrait, Source, Random};
+
+    fn VRF_PROVIDER_ADDRESS() -> ContractAddress {
+        0x051fea4450da9d6aee758bdeba88b2f665bcbf549d2c61421aa724e9ac0ced8f.try_into().unwrap()
+    }
 
     #[abi(embed_v0)]
     impl RandomTestImpl of super::IRandomTest<ContractState> {
@@ -39,7 +43,7 @@ pub mod random_test {
             let mut world = self.world(@"dojo_starter");
             let caller = get_caller_address();
 
-            let vrf_provider = IVrfProviderDispatcher { contract_address: 0x051fea4450da9d6aee758bdeba88b2f665bcbf549d2c61421aa724e9ac0ced8f.try_into().unwrap() };
+            let vrf_provider = IVrfProviderDispatcher { contract_address: VRF_PROVIDER_ADDRESS() };
             let value = vrf_provider.consume_random(Source::Nonce(caller));
             println!("value: {}", value);
             world.write_model(@Random { owner: caller, value });
