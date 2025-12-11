@@ -2,7 +2,7 @@ import { createDojoConfig } from "@dojoengine/core";
 import { BurnerManager } from "@dojoengine/create-burner";
 import { Account, RpcProvider } from "starknet";
 import { RPC_URL } from "./config";
-import manifest from "./manifest_slot.json";
+import manifest from "../../manifest_slot.json";
 
 export async function setupBurner() {
   // Master account from dojo_slot.toml

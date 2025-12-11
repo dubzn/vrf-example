@@ -36,7 +36,7 @@ pub mod random_test {
     #[abi(embed_v0)]
     impl RandomTestImpl of super::IRandomTest<ContractState> {
         fn set_random(ref self: ContractState) {
-            let mut world = self.world(@"starter-vrf");
+            let mut world = self.world(@"dojo_starter");
             let caller = get_caller_address();
 
             let vrf_provider = IVrfProviderDispatcher { contract_address: 0x051fea4450da9d6aee758bdeba88b2f665bcbf549d2c61421aa724e9ac0ced8f.try_into().unwrap() };
@@ -46,7 +46,7 @@ pub mod random_test {
         }
 
         fn get_random(self: @ContractState) -> felt252 {
-            let world = self.world(@"starter-vrf");
+            let world = self.world(@"dojo_starter");
             let caller = get_caller_address();
             let random: Random = world.read_model(caller);
             random.value

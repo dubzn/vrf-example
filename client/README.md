@@ -61,7 +61,7 @@ mkcert localhost 127.0.0.1 ::1
 ## How It Works
 
 1. Click "Connect Wallet" to connect using Cartridge Controller
-2. Click "Get Random Number (1-100)" to generate a verifiable random number
+2. Click "Generate VRF number" to generate a verifiable random number
 3. The app calls the VRF provider using the pattern:
    - `request_random` (first call in multicall)
    - `get_random_number()` on your deployed contract (second call in multicall)

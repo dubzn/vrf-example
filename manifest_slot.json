@@ -34,7 +34,7 @@
   "contracts": [
     {
       "address": "0x1b35e76e7d7a03ad640e91fe2125a8c9636761cbe1182e56dfadd7935453754",
-      "class_hash": "0x4ac713956351bccf7c025ccdf1ae8b9719cc1efa2e623f015626e0ad7f422c9",
+      "class_hash": "0x532a67a412ce509c06e6e29a4b9c0db34ff3dfb721699564e42576334673db2",
       "init_calldata": [],
       "tag": "dojo_starter-random_test",
       "selector": "0x6611efd39c025dac5666ece8b0e6d3a494ae046b4e35160c19068759dfabd63",

@@ -236,7 +236,7 @@ const VRFTest: React.FC<VRFTestProps> = ({ burnerManager }) => {
               onClick={generateRandomNumber}
               disabled={isGenerating}
             >
-              {isGenerating ? 'Generating...' : 'Get Random Number (1-100)'}
+              {isGenerating ? 'Generating...' : 'Generate VRF number'}
             </button>
 
             {randomNumber !== null && (
