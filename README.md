@@ -1,8 +1,8 @@
 # VRF Example
 
-Este proyecto está conectado a una instancia deployada en Slot con el nombre `starter-vrf`.
+This project is connected to a deployed instance on Slot named `starter-vrf`.
 
-## Levantar el proyecto
+## Running the project
 
 ```bash
 cd client
@@ -14,9 +14,9 @@ npm run dev
 
 - Client: https://localhost:3000
 
-## Configuración
+## Configuration
 
-El cliente está configurado para conectarse a:
+The client is configured to connect to:
 - **Slot**: `starter-vrf`
 - **RPC**: `https://api.cartridge.gg/x/starter-vrf/katana`
-- **Contrato**: Ver `client/src/config.ts` para las direcciones
+- **Contract**: See `client/src/config.ts` for addresses
