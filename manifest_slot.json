@@ -34,12 +34,12 @@
   "contracts": [
     {
       "address": "0x1b35e76e7d7a03ad640e91fe2125a8c9636761cbe1182e56dfadd7935453754",
-      "class_hash": "0x6e3af8bf944a333da66b3302c4883d1d72e3ff77b6dbfd627ee9993af286c6e",
+      "class_hash": "0x4ac713956351bccf7c025ccdf1ae8b9719cc1efa2e623f015626e0ad7f422c9",
       "init_calldata": [],
       "tag": "dojo_starter-random_test",
       "selector": "0x6611efd39c025dac5666ece8b0e6d3a494ae046b4e35160c19068759dfabd63",
       "systems": [
-        "get_random_number",
+        "set_random",
         "upgrade"
       ]
     }
@@ -123,6 +123,23 @@
       "class_hash": "0x71686e5c13179d564fbb3fe4cf68ad197e2722a0869502cb3017e2cf70ffc3",
       "tag": "dojo_starter-PositionCount",
       "selector": "0x44e8e8c3aea54e97e01563cacc08abb4a8ce8c468cd4d3a332bca12bfc2290d"
+    },
+    {
+      "members": [
+        {
+          "name": "owner",
+          "type": "core::starknet::contract_address::ContractAddress",
+          "key": true
+        },
+        {
+          "name": "value",
+          "type": "core::felt252",
+          "key": false
+        }
+      ],
+      "class_hash": "0x5c2fe1f770815cfeda27a081138dd4e9319d2db588e9b5042c48695c46a7f7c",
+      "tag": "dojo_starter-Random",
+      "selector": "0x38a3b7ebb329c54062eb5287191272385a1deef3b89ea8aa9e5c7870174627d"
     }
   ],
   "events": [],
@@ -2110,16 +2127,53 @@
       "items": [
         {
           "type": "function",
-          "name": "get_random_number",
+          "name": "set_random",
+          "inputs": [],
+          "outputs": [],
+          "state_mutability": "external"
+        },
+        {
+          "type": "function",
+          "name": "get_random",
           "inputs": [],
           "outputs": [
             {
               "type": "core::felt252"
             }
           ],
-          "state_mutability": "external"
+          "state_mutability": "view"
         }
       ]
+    },
+    {
+      "type": "struct",
+      "name": "dojo_starter::systems::actions::Random",
+      "members": [
+        {
+          "name": "owner",
+          "type": "core::starknet::contract_address::ContractAddress"
+        },
+        {
+          "name": "value",
+          "type": "core::felt252"
+        }
+      ]
+    },
+    {
+      "type": "struct",
+      "name": "dojo_starter::systems::actions::RandomValue",
+      "members": [
+        {
+          "name": "value",
+          "type": "core::felt252"
+        }
+      ]
+    },
+    {
+      "type": "event",
+      "name": "dojo_starter::systems::actions::m_Random::Event",
+      "kind": "enum",
+      "variants": []
     },
     {
       "type": "event",
@@ -2144,7 +2198,7 @@
       "inputs": [
         {
           "name": "model",
-          "type": "dojo_starter::models::PositionCount"
+          "type": "dojo_starter::systems::actions::Random"
         }
       ],
       "outputs": [],
@@ -2163,7 +2217,7 @@
       "inputs": [
         {
           "name": "value",
-          "type": "dojo_starter::models::PositionCountValue"
+          "type": "dojo_starter::systems::actions::RandomValue"
         }
       ],
       "outputs": [],

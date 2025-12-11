@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useBurnerManager } from '@dojoengine/create-burner'
-import { CallData } from 'starknet'
+import { CallData, Contract } from 'starknet'
 import { VRF_PROVIDER_ADDRESS, RANDOM_CONTRACT_ADDRESS } from '../config'
 import './VRFTest.css'
 import type { BurnerManager } from '@dojoengine/create-burner'
@@ -83,16 +83,16 @@ const VRFTest: React.FC<VRFTestProps> = ({ burnerManager }) => {
       }))
 
       // Prepare the multicall
-      // First call request_random, then get_random_number from our contract
+      // First call request_random, then set_random from our contract
       const requestRandomCall = {
         contractAddress: VRF_PROVIDER_ADDRESS,
         entrypoint: 'request_random',
         calldata: requestRandomCalldata, // Use manual calldata
       }
 
-      const getRandomCall = {
+      const setRandomCall = {
         contractAddress: RANDOM_CONTRACT_ADDRESS,
-        entrypoint: 'get_random_number',
+        entrypoint: 'set_random',
         calldata: [],
       }
 
@@ -103,14 +103,14 @@ const VRFTest: React.FC<VRFTestProps> = ({ burnerManager }) => {
         calldataLength: requestRandomCall.calldata.length,
       })    
 
-      console.log('Get Random Call:', {
-        contractAddress: getRandomCall.contractAddress,
-        entrypoint: getRandomCall.entrypoint,
-        calldata: getRandomCall.calldata,
-        calldataLength: getRandomCall.calldata.length,
+      console.log('Set Random Call:', {
+        contractAddress: setRandomCall.contractAddress,
+        entrypoint: setRandomCall.entrypoint,
+        calldata: setRandomCall.calldata,
+        calldataLength: setRandomCall.calldata.length,
       })
 
-      const calls = [requestRandomCall, getRandomCall]
+      const calls = [requestRandomCall, setRandomCall]
 
       console.log('Total calls:', calls.length)
       // Helper to serialize BigInt for logging
@@ -139,20 +139,30 @@ const VRFTest: React.FC<VRFTestProps> = ({ burnerManager }) => {
       await account.waitForTransaction(result.transaction_hash, { retryInterval: 100 })
       console.log('Transaction confirmed!')
 
-      // Try to read the random value by calling the contract
-      // Note: get_random_number is not a view function, so we can't call it directly
-      // We'll extract a number from the transaction hash for display
-      // In a real scenario, you'd want to emit an event or have a view function to read the last value
-      
-      const txHash = result.transaction_hash
-      const hashValue = BigInt('0x' + txHash.replace('0x', '').slice(0, 16))
-      const randomValue = Number(hashValue % BigInt(100)) + 1 // 1-100
+      // Now call get_random to get the actual value that was set
+      console.log('Calling get_random to retrieve the actual value...')
+      const contract = new Contract(
+        [
+          {
+            name: 'get_random',
+            type: 'function',
+            inputs: [],
+            outputs: [{ type: 'felt252' }],
+            state_mutability: 'view',
+          },
+        ],
+        RANDOM_CONTRACT_ADDRESS,
+        account.provider
+      )
+
+      const randomValueBigInt = await contract.get_random()
+      const randomValue = Number(randomValueBigInt % BigInt(100)) + 1 // 1-100
       
       setRandomNumber(randomValue)
       
-      console.log('Transaction hash:', txHash)
-      console.log('Random number generated via contract:', RANDOM_CONTRACT_ADDRESS)
-      console.log('Displayed random value (from hash):', randomValue)
+      console.log('Transaction hash:', result.transaction_hash)
+      console.log('Random value from contract (felt252):', randomValueBigInt.toString())
+      console.log('Displayed random value (1-100):', randomValue)
     } catch (err: any) {
       console.error('=== Error Details ===')
       console.error('Error type:', err?.constructor?.name)
