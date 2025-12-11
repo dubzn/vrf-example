@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useBurnerManager } from '@dojoengine/create-burner'
-import { CallData, Contract } from 'starknet'
-import { VRF_PROVIDER_ADDRESS, RANDOM_CONTRACT_ADDRESS } from '../config'
+import { CallData, Contract, RpcProvider } from 'starknet'
+import { VRF_PROVIDER_ADDRESS, RANDOM_CONTRACT_ADDRESS, RPC_URL } from '../config'
 import './VRFTest.css'
 import type { BurnerManager } from '@dojoengine/create-burner'
 
@@ -139,30 +139,38 @@ const VRFTest: React.FC<VRFTestProps> = ({ burnerManager }) => {
       await account.waitForTransaction(result.transaction_hash, { retryInterval: 100 })
       console.log('Transaction confirmed!')
 
-      // Now call get_random to get the actual value that was set
+      // Call get_random to get the actual value that was set
       console.log('Calling get_random to retrieve the actual value...')
-      const contract = new Contract(
-        [
-          {
-            name: 'get_random',
-            type: 'function',
-            inputs: [],
-            outputs: [{ type: 'felt252' }],
-            state_mutability: 'view',
-          },
-        ],
-        RANDOM_CONTRACT_ADDRESS,
-        account.provider
-      )
+      const contractAbi = [
+        {
+          type: 'function',
+          name: 'get_random',
+          inputs: [],
+          outputs: [
+            {
+              type: 'core::felt252',
+            },
+          ],
+          state_mutability: 'view',
+        },
+      ]
 
-      const randomValueBigInt = await contract.get_random()
-      const randomValue = Number(randomValueBigInt % BigInt(100)) + 1 // 1-100
+      // Create provider for reading
+      const provider = new RpcProvider({ nodeUrl: RPC_URL })
       
-      setRandomNumber(randomValue)
+      const contract = new Contract({
+        abi: contractAbi,
+        address: RANDOM_CONTRACT_ADDRESS,
+        providerOrAccount: provider, // Provider for reading
+      })
+
+      // Call view function to get the random value
+      const randomValueBigInt = await contract.get_random()
+      
+      setRandomNumber(randomValueBigInt)
       
       console.log('Transaction hash:', result.transaction_hash)
-      console.log('Random value from contract (felt252):', randomValueBigInt.toString())
-      console.log('Displayed random value (1-100):', randomValue)
+      console.log('Displayed random value (1-100):', randomValueBigInt.toString())
     } catch (err: any) {
       console.error('=== Error Details ===')
       console.error('Error type:', err?.constructor?.name)
