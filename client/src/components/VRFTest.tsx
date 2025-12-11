@@ -164,7 +164,7 @@ const VRFTest: React.FC<VRFTestProps> = ({ burnerManager }) => {
         providerOrAccount: provider, // Provider for reading
       })
 
-      // Call view function to get the random value
+      await new Promise(resolve => setTimeout(resolve, 2000))
       const randomValueBigInt = await contract.get_random()
       
       setRandomNumber(randomValueBigInt)
