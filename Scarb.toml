@@ -7,7 +7,7 @@ edition = "2024_07"
 sierra-replace-ids = true
 
 [scripts]
-migrate = "sozo build && sozo migrate"
+migrate = "sozo build -P slot && sozo inspect -P slot && sozo migrate -P slot"
 
 [dependencies]
 dojo = "1.8.0"
